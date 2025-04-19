@@ -5,35 +5,27 @@ const { CreateBookAndChapter, GetBookAllService, GetBookOnlyService, DeleteBookS
 
 const createBook = async (req, res) => {
   try {
-    console.log("File received:", req.file);
-    console.log("Book data received:", req.body.bookdata);
-    console.log("Chapters received:", req.body.chapters);
+    const { bookdata, chapters } = req.body;
     
-    // Parse the JSON data
-    const bookData = JSON.parse(req.body.bookdata);
-    const listChapter = JSON.parse(req.body.chapters);
-    
-    let imageUrl = null;
-    
-    // Check if a file was uploaded
-    if (req.file) {
-      // Upload image to cloudinary
-      try {
-        const uploadImage = await cloudinary.uploader.upload(req.file.path, { folder: 'uploads' });
-        imageUrl = uploadImage.secure_url;
-        
-        // Clean up the temporary file after upload
-        fs.unlinkSync(req.file.path);
-      } catch (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({ message: "Failed to upload book image", error: error.message });
-      }
+    if (!bookdata || !chapters) {
+      return res.status(400).json({ message: "Missing required data: bookdata or chapters" });
     }
-    
-    // Create book and chapters in the database with the image URL (or null if no image)
-    await CreateBookAndChapter(bookData, listChapter, imageUrl);
 
-    return res.status(200).json({ message: "Book created successfully" });
+    if (!Array.isArray(chapters)) {
+      return res.status(400).json({ message: "Chapters must be an array" });
+    }
+
+    if (typeof bookdata !== 'object' || !bookdata.title) {
+      return res.status(400).json({ message: "Invalid bookdata format. Must include title" });
+    }
+
+    // Create book and chapters in the database
+    const result = await CreateBookAndChapter(bookdata, chapters);
+    
+    return res.status(200).json({ 
+      message: "Book created successfully",
+      data: result.DT
+    });
   } catch (error) {
     console.error("Error in createBook:", error);
     return res.status(500).json({ message: "Failed to create book", error: error.message });
@@ -97,4 +89,4 @@ const updateBook = async (req, res) => {
   }
 }
 
-module.exports = { createBook, getBookAll, getBookOnly, deleteBook, updateBook}
+module.exports = { createBook, getBookAll, getBookOnly, deleteBook, updateBook }
