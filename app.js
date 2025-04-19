@@ -14,18 +14,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+require('dotenv').config()
 app.get("", (req, res) => {
   res.send("hello world")
 })
 apiRoutes(app);
 
+PORT = process.env.PORT || 8080
+
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
-app.listen(8000, () => {
-  console.log("Server running at http://localhost:8000");
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
   
 })
 
